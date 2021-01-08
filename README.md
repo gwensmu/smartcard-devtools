@@ -1,5 +1,25 @@
 # Setting up your own private key infrastructure (PKI) for developing smartcard authorization
 
+## Quick Reference
+
+```bash
+# do this once - setup CA
+make create_ca
+make root_cert
+
+# do this for each client/user who needs a cert
+make private_key
+make csr
+make crt
+make keystore
+
+# do this for certificate revocation
+make crl
+make revoke_crt
+```
+
+## Narrative Version
+
 If you're newer to key management, please consult with your org's security professional before using this
 tooling on any staging/test sites.
 
@@ -22,7 +42,7 @@ Verifying - Enter pass phrase for ca.key:
 You have just generated a root key, and hopefully associated a password with it. Save that passphrase in a secure place. Keep your root key secure. This key will be used to create your root certificate. Anyone who has the root key and its password has the ability to generate certificates your site will trust.
 
 ``` bash
-$ make generate_root_cert 
+$ makroot_cert 
 openssl req -x509 -new -nodes -key ca.key -sha256 -days 1825 -out ca.pem
 Enter pass phrase for ca.key:
 You are about to be asked to enter information that will be incorporated
@@ -50,7 +70,7 @@ Ok, you've been imagining yourself as Amira, right? CISSP, Masters degree in CS 
 First, we want to generate a private key, unique for our new employee. You do this:
 
 ```
-$ make generate_private_key
+$ makprivate_key
 openssl genrsa -out dev.key 2048
 Generating RSA private key, 2048 bit long modulus (2 primes)
 ..+++++
@@ -61,7 +81,7 @@ e is 65537 (0x010001)
 Then you generate a certificate signing request. The CSR will use the key you just made to create a file that allows Amira to create a certificate that will be uniquely associated with the new employee sitting in front of you. The certificate that Amira gives you will store some metadata about the new employee, like their name, that's defined below.
 
 ``` bash
-$ make generate_csr
+$ makcsr
 openssl req -new -key dev.key -out dev.csr
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
@@ -87,7 +107,7 @@ An optional company name []:
 You, Jose, send the CSR to Amira. You've worked with Amira for many years, so while she didn't check the new employees driver's licence herself, she trusts that you did. She uses the CSR, the CA, and the password to the root key to generate a signed certificate for your new employee, and sends the certificate back.
 
 ``` bash
-$ make generate_crt
+$ makcrt
 openssl x509 -req -in dev.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out dev.crt -days 825 -sha256 -extfile config.ext
 Signature ok
 subject=C = US, ST = IL, L = Chicago, O = Tandem, OU = Tandem, CN = Gwen Smuda, emailAddress = gwen.smuda@gmail.com
@@ -96,7 +116,7 @@ Enter pass phrase for ca.key:
 ```
 
 ```bash
-$ make generate_keystore
+$ makkeystore
 openssl pkcs12 -export -in dev.crt -inkey dev.key -out client.p12 -name "clientcert"
 Enter Export Password:
 Verifying - Enter Export Password:
@@ -191,7 +211,7 @@ make revoke_crt
 In this example, certificate revocation checks are handled by a CRL file which is loaded onto the server. In practice, these lists get big, so you'll use OSCP instead, which is just a http request over 80 to a web endpoint that will check the revocation list. The OSCP endpoint will be listed on the client cert if its being used as part of the PKI scheme.
 
 ```bash
-make regenerate_crl
+make crl
 ```
 
 Now, if the former employee breaks into the office tries to use the bathroom, they will be unable to access the toilet. They will swipe their smartcard (which HR should have collected, but you know HR) and the bathroom server will check the expiration date (still good) and the certificate revocation list and see that the cert is no good around here anymore.
