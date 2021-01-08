@@ -47,7 +47,7 @@ The root cert is public. If you want to set up a server to do client verificatio
 
 Ok, you've been imagining yourself as Amira, right? CISSP, Masters degree in CS from Stanford, wondering how her security career turned out to be so bureaucratic? Stop doing that. Your name is now Jose, and you are a sysadmin onboarding a new employee at your Chicago office. You're provisioning their smartcard so they can use the office bathroom. The new employee has already provided you with a drivers licence, and after thirty tense minutes of debate, convinced you that they are who they say they are.
 
-First, we want to generate a private key. This will be stored on the smartcard. It will be encrypted - the only way to decrypt it is for the owner of the smartcard to type in their pin. (todo, is that true?) You do this:
+First, we want to generate a private key, unique for our new employee. You do this:
 
 ```
 $ make generate_private_key
