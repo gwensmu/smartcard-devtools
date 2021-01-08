@@ -51,7 +51,7 @@ First, we want to generate a private key. This will be stored on the smartcard. 
 
 ```
 $ make generate_private_key
-openssl genrsa -out dev.epiq.com.key 2048
+openssl genrsa -out dev.key 2048
 Generating RSA private key, 2048 bit long modulus (2 primes)
 ..+++++
 .................+++++
@@ -62,7 +62,7 @@ Then you generate a certificate signing request. The CSR will use the key you ju
 
 ``` bash
 $ make generate_csr
-openssl req -new -key dev.epiq.com.key -out dev.epiq.com.csr
+openssl req -new -key dev.key -out dev.csr
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
 What you are about to enter is what is called a Distinguished Name or a DN.
@@ -88,7 +88,7 @@ You, Jose, send the CSR to Amira. You've worked with Amira for many years, so wh
 
 ``` bash
 $ make generate_crt
-openssl x509 -req -in dev.epiq.com.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out dev.epiq.com.crt -days 825 -sha256 -extfile config.ext
+openssl x509 -req -in dev.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out dev.crt -days 825 -sha256 -extfile config.ext
 Signature ok
 subject=C = US, ST = IL, L = Chicago, O = Tandem, OU = Tandem, CN = Gwen Smuda, emailAddress = gwen.smuda@gmail.com
 Getting CA Private Key
@@ -97,7 +97,7 @@ Enter pass phrase for ca.key:
 
 ```bash
 $ make generate_keystore
-openssl pkcs12 -export -in dev.epiq.com.crt -inkey dev.epiq.com.key -out client.p12 -name "clientcert"
+openssl pkcs12 -export -in dev.crt -inkey dev.key -out client.p12 -name "clientcert"
 Enter Export Password:
 Verifying - Enter Export Password:
 ```
@@ -107,7 +107,7 @@ When we get to the "export password" step, you, Jose, will hand the keyboard to 
 You (Jose) store the keystore on the smartcard using some magic. Then you give the smartcard to the new employee, and remind them that they shouldn't forget their pin, but also they should not write it down anywhere. After they leave, you realize you forgot their name, so you inspect the cert, cuz it says all sorts of things about them:
 
 ``` bash
-$ openssl x509 -in dev.epiq.com.crt -text -noout
+$ openssl x509 -in dev.crt -text -noout
 Certificate:
     Data:
         Version: 3 (0x2)
@@ -151,7 +151,7 @@ Certificate:
             X509v3 Key Usage: 
                 Digital Signature, Non Repudiation, Key Encipherment, Data Encipherment
             X509v3 Subject Alternative Name: 
-                DNS:dev.epiq.com
+                DNS:dev
     Signature Algorithm: sha256WithRSAEncryption
          04:7c:97:14:8f:ef:28:6d:8f:e1:9d:ae:96:78:c1:9e:7a:3f:
          f4:86:4c:1f:33:14:17:ae:6b:07:2e:50:48:12:3e:53:1b:06:
