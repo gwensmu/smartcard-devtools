@@ -84,7 +84,7 @@ A challenge password []:
 An optional company name []:
 ```
 
-You, Jose, send the CSR to Amira. You've worked with Amira for many years, so while she didn't check the new employees driver's licence herself, she trusts that you did. She uses the CA, along with the password to the root key, to generate a signed certificate for your new employee, and sends the certificate back.
+You, Jose, send the CSR to Amira. You've worked with Amira for many years, so while she didn't check the new employees driver's licence herself, she trusts that you did. She uses the CSR, the CA, and the password to the root key to generate a signed certificate for your new employee, and sends the certificate back.
 
 ``` bash
 $ make generate_crt
