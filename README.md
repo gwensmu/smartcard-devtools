@@ -1,5 +1,29 @@
 # Setting up your own private key infrastructure (PKI) for developing smartcard authorization
 
+## What is Mutual TLS?
+
+todo
+
+## Quick Reference
+
+```bash
+# do this once - setup CA
+make create_ca
+make root_cert
+
+# do this for each client/user who needs a cert
+make private_key
+make csr
+make crt
+make keystore
+
+# do this for certificate revocation
+make crl
+make revoke_crt
+```
+
+## Narrative Version
+
 If you're newer to key management, please consult with your org's security professional before using this
 tooling on any staging/test sites.
 
@@ -10,21 +34,21 @@ While you execute the following commands, imagine that you are a DevSecOps engin
 
 ``` bash
 $ make create_ca
-openssl genrsa -des3 -out tandemEpicCA.key 2048
+openssl genrsa -des3 -out ca.key 2048
 Generating RSA private key, 2048 bit long modulus (2 primes)
 ....+++++
 ................+++++
 e is 65537 (0x010001)
-Enter pass phrase for tandemEpicCA.key:
-Verifying - Enter pass phrase for tandemEpicCA.key:
+Enter pass phrase for ca.key:
+Verifying - Enter pass phrase for ca.key:
 ```
 
 You have just generated a root key, and hopefully associated a password with it. Save that passphrase in a secure place. Keep your root key secure. This key will be used to create your root certificate. Anyone who has the root key and its password has the ability to generate certificates your site will trust.
 
 ``` bash
-$ make generate_root_cert 
-openssl req -x509 -new -nodes -key tandemEpicCA.key -sha256 -days 1825 -out tandemEpicCA.pem
-Enter pass phrase for tandemEpicCA.key:
+$ make root_cert
+openssl req -x509 -new -nodes -key ca.key -sha256 -days 1825 -out ca.pem
+Enter pass phrase for ca.key:
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
 What you are about to enter is what is called a Distinguished Name or a DN.
@@ -32,7 +56,7 @@ There are quite a few fields but you can leave some blank
 For some fields there will be a default value,
 If you enter '.', the field will be left blank.
 -----
-Country Name (2 letter code) [AU]:US      
+Country Name (2 letter code) [AU]:US
 State or Province Name (full name) [Some-State]:IL
 Locality Name (eg, city) []:Chicago
 Organization Name (eg, company) [Internet Widgits Pty Ltd]:Tandem
@@ -47,11 +71,11 @@ The root cert is public. If you want to set up a server to do client verificatio
 
 Ok, you've been imagining yourself as Amira, right? CISSP, Masters degree in CS from Stanford, wondering how her security career turned out to be so bureaucratic? Stop doing that. Your name is now Jose, and you are a sysadmin onboarding a new employee at your Chicago office. You're provisioning their smartcard so they can use the office bathroom. The new employee has already provided you with a drivers licence, and after thirty tense minutes of debate, convinced you that they are who they say they are.
 
-First, we want to generate a private key. This will be stored on the smartcard. It will be encrypted - the only way to decrypt it is for the owner of the smartcard to type in their pin. (todo, is that true?) You do this:
+First, we want to generate a private key, unique for our new employee. You do this:
 
 ```
-$ make generate_private_key
-openssl genrsa -out dev.epiq.com.key 2048
+$ make private_key
+openssl genrsa -out dev.key 2048
 Generating RSA private key, 2048 bit long modulus (2 primes)
 ..+++++
 .................+++++
@@ -61,8 +85,8 @@ e is 65537 (0x010001)
 Then you generate a certificate signing request. The CSR will use the key you just made to create a file that allows Amira to create a certificate that will be uniquely associated with the new employee sitting in front of you. The certificate that Amira gives you will store some metadata about the new employee, like their name, that's defined below.
 
 ``` bash
-$ make generate_csr
-openssl req -new -key dev.epiq.com.key -out dev.epiq.com.csr
+$ make csr
+openssl req -new -key dev.key -out dev.csr
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
 What you are about to enter is what is called a Distinguished Name or a DN.
@@ -84,20 +108,20 @@ A challenge password []:
 An optional company name []:
 ```
 
-You, Jose, send the CSR to Amira. You've worked with Amira for many years, so while she didn't check the new employees driver's licence herself, she trusts that you did. She uses the CA, along with the password to the root key, to generate a signed certificate for your new employee, and sends the certificate back.
+You, Jose, send the CSR to Amira. You've worked with Amira for many years, so while she didn't check the new employees driver's licence herself, she trusts that you did. She uses the CSR, the CA, and the password to the root key to generate a signed certificate for your new employee, and sends the certificate back.
 
 ``` bash
-$ make generate_crt
-openssl x509 -req -in dev.epiq.com.csr -CA tandemEpicCA.pem -CAkey tandemEpicCA.key -CAcreateserial -out dev.epiq.com.crt -days 825 -sha256 -extfile config.ext
+$ make crt
+openssl x509 -req -in dev.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out dev.crt -days 825 -sha256 -extfile config.ext
 Signature ok
 subject=C = US, ST = IL, L = Chicago, O = Tandem, OU = Tandem, CN = Gwen Smuda, emailAddress = gwen.smuda@gmail.com
 Getting CA Private Key
-Enter pass phrase for tandemEpicCA.key:
+Enter pass phrase for ca.key:
 ```
 
 ```bash
-$ make generate_keystore
-openssl pkcs12 -export -in dev.epiq.com.crt -inkey dev.epiq.com.key -out client.p12 -name "clientcert"
+$ make keystore
+openssl pkcs12 -export -in dev.crt -inkey dev.key -out client.p12 -name "clientcert"
 Enter Export Password:
 Verifying - Enter Export Password:
 ```
@@ -107,7 +131,7 @@ When we get to the "export password" step, you, Jose, will hand the keyboard to 
 You (Jose) store the keystore on the smartcard using some magic. Then you give the smartcard to the new employee, and remind them that they shouldn't forget their pin, but also they should not write it down anywhere. After they leave, you realize you forgot their name, so you inspect the cert, cuz it says all sorts of things about them:
 
 ``` bash
-$ openssl x509 -in dev.epiq.com.crt -text -noout
+$ openssl x509 -in dev.crt -text -noout
 Certificate:
     Data:
         Version: 3 (0x2)
@@ -143,15 +167,15 @@ Certificate:
                     f8:ed
                 Exponent: 65537 (0x10001)
         X509v3 extensions:
-            X509v3 Authority Key Identifier: 
+            X509v3 Authority Key Identifier:
                 keyid:82:D5:9C:B9:72:8E:D2:B0:79:29:4E:09:67:A1:2D:3B:C8:09:92:1D
 
-            X509v3 Basic Constraints: 
+            X509v3 Basic Constraints:
                 CA:FALSE
-            X509v3 Key Usage: 
+            X509v3 Key Usage:
                 Digital Signature, Non Repudiation, Key Encipherment, Data Encipherment
-            X509v3 Subject Alternative Name: 
-                DNS:dev.epiq.com
+            X509v3 Subject Alternative Name:
+                DNS:dev
     Signature Algorithm: sha256WithRSAEncryption
          04:7c:97:14:8f:ef:28:6d:8f:e1:9d:ae:96:78:c1:9e:7a:3f:
          f4:86:4c:1f:33:14:17:ae:6b:07:2e:50:48:12:3e:53:1b:06:
@@ -170,29 +194,34 @@ Certificate:
          40:e1:08:fb
 ```
 
-Now you are Amira again. You're meditating on your life and your choices when you realize that you've been provisioning all these certs, but 
+Now you are Amira again. You're meditating on your life and your choices when you realize that you've been provisioning all these certs, but
 you have no way of revoking them. Before anyone else notices, you create a certificate revocation list:
 
 ```
-$ make create_crl
-openssl ca -config ca.conf -gencrl -keyfile tandemEpicCA.key -cert tandemEpicCA.pem -out tandemEpicCA.crl.pem && openssl crl -inform PEM -in tandemEpicCA.crl.pem -outform DER -out tandemEpicCA.crl
+$ make crl
+openssl ca -config ca.conf -gencrl -keyfile ca.key -cert ca.pem -out ca.crl.pem && openssl crl -inform PEM -in ca.crl.pem -outform DER -out ca.crl
 Using configuration from ca.conf
-Enter pass phrase for tandemEpicCA.key:
+Enter pass phrase for ca.key:
 ```
 
-Now it is Tuesday of next week. You are Jose. HR just told you that the new employee has already quit. You call Amira to let her know. "Yes," says Amira, "I am fully prepared for this and have been for some time." 
+Now it is Tuesday of next week. You are Jose. HR just told you that the new employee has already quit. You call Amira to let her know. "Yes," says Amira, "I am fully prepared for this and have been for some time."
 
-You are Amira. You revoke the certificate. Now, if the former employee breaks into the office tries to use the bathroom, they will be unable to access the toilet. They will swipe their smartcard (which HR should have collected, but you know HR) and the bathroom server will check the expiration date (still good) and the certificate revocation list and see that the cert is no good around here anymore.
-
+You are Amira. You revoke the certificate.
 
 ```bash
-make revoke_crt 
+make revoke_crt
 ```
 
 In this example, certificate revocation checks are handled by a CRL file which is loaded onto the server. In practice, these lists get big, so you'll use OSCP instead, which is just a http request over 80 to a web endpoint that will check the revocation list. The OSCP endpoint will be listed on the client cert if its being used as part of the PKI scheme.
 
 ```bash
-make regenerate_crl
+make crl
 ```
 
+Now, if the former employee breaks into the office tries to use the bathroom, they will be unable to access the toilet. They will swipe their smartcard (which HR should have collected, but you know HR) and the bathroom server will check the expiration date (still good) and the certificate revocation list and see that the cert is no good around here anymore.
+
 Congrats! That was the full lifecycle of authentication via PKI!
+
+## Technical dive
+
+todo: go into the details of what's happening in the open ssl commands. maybe this belongs as doc in the makefile

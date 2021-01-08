@@ -1,27 +1,23 @@
 create_ca:
-	openssl genrsa -des3 -out ca.key 2048
+	openssl genrsa -des3 -out outputs/ca.key 2048
 
-generate_root_cert:
-	openssl req -x509 -new -nodes -key ca.key -sha256 -days 1825 -out ca.pem
+root_cert:
+	openssl req -x509 -new -nodes -key outputs/ca.key -sha256 -days 1825 -out outputs/ca.pem
 
-generate_private_key:
-	openssl genrsa -out dev.key 2048
+private_key:
+	openssl genrsa -out outputs/dev.key 2048
 
-generate_csr:
-	openssl req -new -key dev.key -out dev.csr
+csr:
+	openssl req -new -key outputs/dev.key -out outputs/dev.csr
 
-generate_crt:
-	openssl x509 -req -in dev.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out dev.crt -days 825 -sha256
+crt:
+	openssl x509 -req -in outputs/dev.csr -CA outputs/ca.pem -CAkey outputs/ca.key -CAcreateserial -out outputs/dev.crt -days 825 -sha256
 
-generate_keystore:
-	openssl pkcs12 -export -in dev.crt -inkey dev.key -out client.p12 -name "clientcert"
+keystore:
+	openssl pkcs12 -export -in outputs/dev.crt -inkey outputs/dev.key -out outputs/client.p12 -name "clientcert"
 
-create_crl:
-	openssl ca -config ca.conf -gencrl -keyfile ca.key -cert ca.pem -out ca.crl.pem && openssl crl -inform PEM -in ca.crl.pem -outform DER -out ca.crl
+crl:
+	openssl ca -config ca.conf -gencrl -keyfile outputs/ca.key -cert outputs/ca.pem -out outputs/ca.crl.pem && openssl crl -inform PEM -in outputs/ca.crl.pem -outform DER -out outputs/ca.crl
 
 revoke_crt:
-	openssl ca -config ca.conf -revoke dev.crt -keyfile ca.key -cert ca.crt
-
-# todo: this isn't right
-regenerate_crl:
-	create_crl
+	openssl ca -config ca.conf -revoke outputs/dev.crt -keyfile outputs/ca.key -cert outputs/ca.crt
