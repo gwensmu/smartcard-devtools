@@ -182,8 +182,7 @@ Enter pass phrase for ca.key:
 
 Now it is Tuesday of next week. You are Jose. HR just told you that the new employee has already quit. You call Amira to let her know. "Yes," says Amira, "I am fully prepared for this and have been for some time." 
 
-You are Amira. You revoke the certificate. Now, if the former employee breaks into the office tries to use the bathroom, they will be unable to access the toilet. They will swipe their smartcard (which HR should have collected, but you know HR) and the bathroom server will check the expiration date (still good) and the certificate revocation list and see that the cert is no good around here anymore.
-
+You are Amira. You revoke the certificate.
 
 ```bash
 make revoke_crt 
@@ -194,5 +193,7 @@ In this example, certificate revocation checks are handled by a CRL file which i
 ```bash
 make regenerate_crl
 ```
+
+Now, if the former employee breaks into the office tries to use the bathroom, they will be unable to access the toilet. They will swipe their smartcard (which HR should have collected, but you know HR) and the bathroom server will check the expiration date (still good) and the certificate revocation list and see that the cert is no good around here anymore.
 
 Congrats! That was the full lifecycle of authentication via PKI!
