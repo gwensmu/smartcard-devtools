@@ -10,21 +10,21 @@ While you execute the following commands, imagine that you are a DevSecOps engin
 
 ``` bash
 $ make create_ca
-openssl genrsa -des3 -out tandemEpicCA.key 2048
+openssl genrsa -des3 -out ca.key 2048
 Generating RSA private key, 2048 bit long modulus (2 primes)
 ....+++++
 ................+++++
 e is 65537 (0x010001)
-Enter pass phrase for tandemEpicCA.key:
-Verifying - Enter pass phrase for tandemEpicCA.key:
+Enter pass phrase for ca.key:
+Verifying - Enter pass phrase for ca.key:
 ```
 
 You have just generated a root key, and hopefully associated a password with it. Save that passphrase in a secure place. Keep your root key secure. This key will be used to create your root certificate. Anyone who has the root key and its password has the ability to generate certificates your site will trust.
 
 ``` bash
 $ make generate_root_cert 
-openssl req -x509 -new -nodes -key tandemEpicCA.key -sha256 -days 1825 -out tandemEpicCA.pem
-Enter pass phrase for tandemEpicCA.key:
+openssl req -x509 -new -nodes -key ca.key -sha256 -days 1825 -out ca.pem
+Enter pass phrase for ca.key:
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
 What you are about to enter is what is called a Distinguished Name or a DN.
@@ -88,11 +88,11 @@ You, Jose, send the CSR to Amira. You've worked with Amira for many years, so wh
 
 ``` bash
 $ make generate_crt
-openssl x509 -req -in dev.epiq.com.csr -CA tandemEpicCA.pem -CAkey tandemEpicCA.key -CAcreateserial -out dev.epiq.com.crt -days 825 -sha256 -extfile config.ext
+openssl x509 -req -in dev.epiq.com.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out dev.epiq.com.crt -days 825 -sha256 -extfile config.ext
 Signature ok
 subject=C = US, ST = IL, L = Chicago, O = Tandem, OU = Tandem, CN = Gwen Smuda, emailAddress = gwen.smuda@gmail.com
 Getting CA Private Key
-Enter pass phrase for tandemEpicCA.key:
+Enter pass phrase for ca.key:
 ```
 
 ```bash
@@ -175,9 +175,9 @@ you have no way of revoking them. Before anyone else notices, you create a certi
 
 ```
 $ make create_crl
-openssl ca -config ca.conf -gencrl -keyfile tandemEpicCA.key -cert tandemEpicCA.pem -out tandemEpicCA.crl.pem && openssl crl -inform PEM -in tandemEpicCA.crl.pem -outform DER -out tandemEpicCA.crl
+openssl ca -config ca.conf -gencrl -keyfile ca.key -cert ca.pem -out ca.crl.pem && openssl crl -inform PEM -in ca.crl.pem -outform DER -out ca.crl
 Using configuration from ca.conf
-Enter pass phrase for tandemEpicCA.key:
+Enter pass phrase for ca.key:
 ```
 
 Now it is Tuesday of next week. You are Jose. HR just told you that the new employee has already quit. You call Amira to let her know. "Yes," says Amira, "I am fully prepared for this and have been for some time." 
