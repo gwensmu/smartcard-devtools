@@ -1,5 +1,9 @@
 # Setting up your own private key infrastructure (PKI) for developing smartcard authorization
 
+## What is Mutual TLS?
+
+todo
+
 ## Quick Reference
 
 ```bash
@@ -217,3 +221,7 @@ make crl
 Now, if the former employee breaks into the office tries to use the bathroom, they will be unable to access the toilet. They will swipe their smartcard (which HR should have collected, but you know HR) and the bathroom server will check the expiration date (still good) and the certificate revocation list and see that the cert is no good around here anymore.
 
 Congrats! That was the full lifecycle of authentication via PKI!
+
+## Technical dive
+
+todo: go into the details of what's happening in the open ssl commands. maybe this belongs as doc in the makefile
