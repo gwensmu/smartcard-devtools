@@ -46,7 +46,7 @@ Verifying - Enter pass phrase for ca.key:
 You have just generated a root key, and hopefully associated a password with it. Save that passphrase in a secure place. Keep your root key secure. This key will be used to create your root certificate. Anyone who has the root key and its password has the ability to generate certificates your site will trust.
 
 ``` bash
-$ makroot_cert 
+$ make root_cert
 openssl req -x509 -new -nodes -key ca.key -sha256 -days 1825 -out ca.pem
 Enter pass phrase for ca.key:
 You are about to be asked to enter information that will be incorporated
@@ -56,7 +56,7 @@ There are quite a few fields but you can leave some blank
 For some fields there will be a default value,
 If you enter '.', the field will be left blank.
 -----
-Country Name (2 letter code) [AU]:US      
+Country Name (2 letter code) [AU]:US
 State or Province Name (full name) [Some-State]:IL
 Locality Name (eg, city) []:Chicago
 Organization Name (eg, company) [Internet Widgits Pty Ltd]:Tandem
@@ -74,7 +74,7 @@ Ok, you've been imagining yourself as Amira, right? CISSP, Masters degree in CS 
 First, we want to generate a private key, unique for our new employee. You do this:
 
 ```
-$ makprivate_key
+$ make private_key
 openssl genrsa -out dev.key 2048
 Generating RSA private key, 2048 bit long modulus (2 primes)
 ..+++++
@@ -85,7 +85,7 @@ e is 65537 (0x010001)
 Then you generate a certificate signing request. The CSR will use the key you just made to create a file that allows Amira to create a certificate that will be uniquely associated with the new employee sitting in front of you. The certificate that Amira gives you will store some metadata about the new employee, like their name, that's defined below.
 
 ``` bash
-$ makcsr
+$ make csr
 openssl req -new -key dev.key -out dev.csr
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
@@ -111,7 +111,7 @@ An optional company name []:
 You, Jose, send the CSR to Amira. You've worked with Amira for many years, so while she didn't check the new employees driver's licence herself, she trusts that you did. She uses the CSR, the CA, and the password to the root key to generate a signed certificate for your new employee, and sends the certificate back.
 
 ``` bash
-$ makcrt
+$ make crt
 openssl x509 -req -in dev.csr -CA ca.pem -CAkey ca.key -CAcreateserial -out dev.crt -days 825 -sha256 -extfile config.ext
 Signature ok
 subject=C = US, ST = IL, L = Chicago, O = Tandem, OU = Tandem, CN = Gwen Smuda, emailAddress = gwen.smuda@gmail.com
@@ -120,7 +120,7 @@ Enter pass phrase for ca.key:
 ```
 
 ```bash
-$ makkeystore
+$ make keystore
 openssl pkcs12 -export -in dev.crt -inkey dev.key -out client.p12 -name "clientcert"
 Enter Export Password:
 Verifying - Enter Export Password:
@@ -167,14 +167,14 @@ Certificate:
                     f8:ed
                 Exponent: 65537 (0x10001)
         X509v3 extensions:
-            X509v3 Authority Key Identifier: 
+            X509v3 Authority Key Identifier:
                 keyid:82:D5:9C:B9:72:8E:D2:B0:79:29:4E:09:67:A1:2D:3B:C8:09:92:1D
 
-            X509v3 Basic Constraints: 
+            X509v3 Basic Constraints:
                 CA:FALSE
-            X509v3 Key Usage: 
+            X509v3 Key Usage:
                 Digital Signature, Non Repudiation, Key Encipherment, Data Encipherment
-            X509v3 Subject Alternative Name: 
+            X509v3 Subject Alternative Name:
                 DNS:dev
     Signature Algorithm: sha256WithRSAEncryption
          04:7c:97:14:8f:ef:28:6d:8f:e1:9d:ae:96:78:c1:9e:7a:3f:
@@ -194,22 +194,22 @@ Certificate:
          40:e1:08:fb
 ```
 
-Now you are Amira again. You're meditating on your life and your choices when you realize that you've been provisioning all these certs, but 
+Now you are Amira again. You're meditating on your life and your choices when you realize that you've been provisioning all these certs, but
 you have no way of revoking them. Before anyone else notices, you create a certificate revocation list:
 
 ```
-$ make create_crl
+$ make crl
 openssl ca -config ca.conf -gencrl -keyfile ca.key -cert ca.pem -out ca.crl.pem && openssl crl -inform PEM -in ca.crl.pem -outform DER -out ca.crl
 Using configuration from ca.conf
 Enter pass phrase for ca.key:
 ```
 
-Now it is Tuesday of next week. You are Jose. HR just told you that the new employee has already quit. You call Amira to let her know. "Yes," says Amira, "I am fully prepared for this and have been for some time." 
+Now it is Tuesday of next week. You are Jose. HR just told you that the new employee has already quit. You call Amira to let her know. "Yes," says Amira, "I am fully prepared for this and have been for some time."
 
 You are Amira. You revoke the certificate.
 
 ```bash
-make revoke_crt 
+make revoke_crt
 ```
 
 In this example, certificate revocation checks are handled by a CRL file which is loaded onto the server. In practice, these lists get big, so you'll use OSCP instead, which is just a http request over 80 to a web endpoint that will check the revocation list. The OSCP endpoint will be listed on the client cert if its being used as part of the PKI scheme.
