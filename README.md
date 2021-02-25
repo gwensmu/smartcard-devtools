@@ -243,10 +243,9 @@ Let's say your webserver is Apache. Here is a Very Minimal vhost configuration w
     
     ...
 </VirtualHost>
+```
 
 If you're in the Rails universe, you might be interested in rails-auth. https://github.com/square/rails-auth/wiki/X.509
 
 For Spring Boot Fans: https://www.baeldung.com/x-509-authentication-in-spring-security
-```
 
-If your organization has mutual auth needs, reach out to Tandem! We've done it before, and we're happy do it again.
