@@ -204,11 +204,49 @@ In this example, certificate revocation checks are handled by a CRL file which i
 make crl
 ```
 
-Now, if the former employee breaks into the office tries to use the bathroom, they will be unable to access the toilet. They will swipe their smartcard (which HR should have collected, but you know HR) and the bathroom server will check the expiration date (still good) and the certificate revocation list and see that the cert is no good around here anymore.
+Now, if the former employee breaks into the office and tries to use the bathroom, they will be unable to access the toilet. They will swipe their smartcard (which HR should have collected, but you know HR) and the bathroom server will check the expiration date (still good) and the certificate revocation list and see that the cert is no good around here anymore.
 
 Congrats! That was the full lifecycle of authentication via PKI!
 
-## Technical dive
+## Server Configuration
 
-todo: go into the details of what's happening in the open ssl commands. maybe this belongs as doc in the makefile.
-todo: example apache vhost?
+But wait, you say! This is all well and good, but how do I configure my webserver to do Mutual TLS? Great question! It's not the default setting!
+
+Let's say your webserver is Apache. Here is a Very Minimal vhost configuration with only the parts related to TLS:
+
+```
+<VirtualHost *:443>
+    ...
+
+    SSLCertificateFile "/usr/local/apache2/ssl/certs/server.crt"
+    SSLCertificateKeyFile "/usr/local/apache2/ssl/certs/server.key"
+    
+    # Enable client verification
+    SSLVerifyClient require
+
+    # A list of public certs for certificate authories that you trust.
+    # In this case, "trust" means: they are used to provision client certs 
+    # for your users.
+    SSLCACertificateFile /etc/httpd/ssl/certs/trusted_certificate_authorities.pem
+    
+    # Enables certificate revocation checks
+    # Server will need to be able to access ocsp.yourorg.internet on port 80
+    SSLOCSPEnable on
+    SSLOCSPDefaultResponder http://ocsp.yourorg.internet
+
+    # If you are running as a reverse proxy,
+    # Uses mod_ssl to extract ID metadata and pass it to the backend
+    # via a request header
+    # The full list of variables available on the cert are here: 
+    # https://httpd.apache.org/docs/current/mod/mod_ssl.html#page-header
+    RequestHeader set X-USERNAME "%{SSL_CLIENT_S_DN_CN}s"
+    
+    ...
+</VirtualHost>
+
+If you're in the Rails universe, you might be interested in rails-auth. https://github.com/square/rails-auth/wiki/X.509
+
+For Spring Boot Fans: https://www.baeldung.com/x-509-authentication-in-spring-security
+```
+
+If your organization has mutual auth needs, reach out to Tandem! We've done it before, and we're happy do it again.
