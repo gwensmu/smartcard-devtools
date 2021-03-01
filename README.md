@@ -38,7 +38,7 @@ make root_cert
 make private_key
 make csr
 make crt
-make keystore
+make bundle
 
 # do this for certificate revocation
 make crl
@@ -129,7 +129,7 @@ A challenge password []:
 An optional company name []:
 ```
 
-You, Jose, send the CSR to Amira. You've worked with Amira for many years, so while she didn't check the new employees driver's licence herself, she trusts that you did. She uses the CSR, the CA, and the password to the root key to generate a signed certificate for your new employee. Amira also sets a password on the private key. (In real life, where scripts are doing most of this, the end user may set their password.) Then, she creates a keystore, bundling the cert and the key together. Then she sends the keystore back with the password to Jose.
+You, Jose, send the CSR to Amira. You've worked with Amira for many years, so while she didn't check the new employees driver's licence herself, she trusts that you did. She uses the CSR, the CA, and the password to the root key to generate a signed certificate for your new employee. Amira also sets a password on the private key. (In real life, where scripts are doing most of this, the end user may set their password.) Then, she creates a bundle, bundling the cert and the key together. Then she sends the bundle back with the password to Jose.
 
 ``` bash
 $ make crt
@@ -141,15 +141,15 @@ Enter pass phrase for ca.key:
 ```
 
 ```bash
-$ make keystore
+$ make bundle
 openssl pkcs12 -export -in dev.crt -inkey dev.key -out client.p12 -name "clientcert"
 Enter Export Password:
 Verifying - Enter Export Password:
 ```
 
-Now both you and Jose both know the keystore password for the new employee. That's not good, that breaks non-repudiation. You really don't want to be associated with this new employee's activities in any way, in case they commit crimes and accuse you of stealing their keycard to do them. While sitting with the new employee, you have them change the keystore password to one that only they know via a little number keyboard. Only after they've typed it will you let them know that the PIN is very important and they shouldn't forget it. You, Jose, also find your job somewhat bureaucratic and are unimpressed with the lack of espionage.
+Now both you and Jose both know the bundle password for the new employee. That's not good, that breaks non-repudiation. You really don't want to be associated with this new employee's activities in any way, in case they commit crimes and accuse you of stealing their keycard to do them. While sitting with the new employee, you have them change the bundle password to one that only they know via a little number keyboard. Only after they've typed it will you let them know that the PIN is very important and they shouldn't forget it. You, Jose, also find your job somewhat bureaucratic and are unimpressed with the lack of espionage.
 
-You (Jose) store the keystore on the smartcard using some magic. Then you give the smartcard to the new employee, and remind them that they shouldn't forget their PIN, but also they should not write it down anywhere. After they leave, you realize you forgot their name, so you inspect the cert, cuz it says all sorts of things about them, like their common name, and where they work:
+You (Jose) store the bundle on the smartcard using some magic. Then you give the smartcard to the new employee, and remind them that they shouldn't forget their PIN, but also they should not write it down anywhere. After they leave, you realize you forgot their name, so you inspect the cert, cuz it says all sorts of things about them, like their common name, and where they work:
 
 ``` bash
 $ openssl x509 -in dev.crt -text -noout

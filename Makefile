@@ -13,7 +13,7 @@ csr:
 crt:
 	openssl x509 -req -in outputs/dev.csr -CA outputs/ca.pem -CAkey outputs/ca.key -CAcreateserial -out outputs/dev.crt -days 825 -sha256
 
-keystore:
+bundle:
 	openssl pkcs12 -export -in outputs/dev.crt -inkey outputs/dev.key -out outputs/client.p12 -name "clientcert"
 
 crl:
